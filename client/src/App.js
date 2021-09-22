@@ -8,7 +8,8 @@ import PlayerHand from './PlayerHand';
 import PlayerActions from './PlayerActions';
 import Snackbar from '@mui/material/Snackbar';
 
-const socket = io.connect('http://localhost:5000');
+const port = process.env.PORT || 'http://localhost:5000';
+const socket = io.connect(port);
 
 function App() {
 
@@ -166,7 +167,7 @@ function App() {
     case 'over':
       let message = updateMessage();
       return (
-        <div className="lobby">
+        <div className="lobby" style={{backgroundImage: `url(${process.env.PUBLIC_URL + '/lobbyBackground.jpeg'})` }}>
           <OpponentHand opponentHand = {opponentHand}/>
           <PlayerHand playerHand = {playerHand} />
           {message}
@@ -179,7 +180,7 @@ function App() {
     default:
       let alert = updateAlert();
       return (
-        <div className="homeComponent">
+        <div className="homeComponent" style={{backgroundImage: `url(${process.env.PUBLIC_URL + '/homeBackground.png'})` }} >
           {alert}
           <div className="ui">
             <Home 
