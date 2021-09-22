@@ -9,7 +9,7 @@
   },
   "author": "",
   "license": "ISC",
-  "start": "node api/index.js",
+  "start": "node index.js",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.1",
