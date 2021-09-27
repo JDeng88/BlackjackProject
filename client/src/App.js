@@ -8,8 +8,7 @@ import PlayerHand from './PlayerHand';
 import PlayerActions from './PlayerActions';
 import Snackbar from '@mui/material/Snackbar';
 
-const port = process.env.PORT || 'http://localhost:5000';
-console.log(process.env.PORT);
+const port = 'http://localhost:5000';
 const socket = io.connect(port);
 
 function App() {
