@@ -9,6 +9,7 @@ import PlayerActions from './PlayerActions';
 import Snackbar from '@mui/material/Snackbar';
 
 const port = process.env.PORT || 'http://localhost:5000';
+console.log(process.env.PORT);
 const socket = io.connect(port);
 
 function App() {
