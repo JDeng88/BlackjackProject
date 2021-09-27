@@ -9,7 +9,7 @@ import PlayerActions from './PlayerActions';
 import Snackbar from '@mui/material/Snackbar';
 
 const port = 'http://localhost:5000';
-const socket = io.connect(port);
+const socket = io.connect("https://blackjackapp2.herokuapp.com/");
 
 function App() {
 
