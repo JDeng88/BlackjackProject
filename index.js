@@ -6,6 +6,9 @@ const cors = require('cors');
 const http = require('http');
 const server = http.createServer(app);
 
+app.use(express.static(__dirname + '/public'));
+app.use(cors());
+app.use(express.json())
 
 const io = require('socket.io')(server, {
     cors: {
@@ -30,9 +33,7 @@ const deck = ["D2", "C2", "H2", "S2",
 
 //D = diamond, C = club, H = heart, S = spade, T= ten, J = Jack, Q = Queen, K = King, A = Ace
 
-app.use(express.static(__dirname + '/public'));
-app.use(cors());
-app.use(express.json())
+
 
 const rooms = [];
 
