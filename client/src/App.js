@@ -62,14 +62,12 @@ function App() {
 
   const hit = () => {
     socket.emit('hit', roomName, function(res){ 
-      console.log('old player hand is ' + playerHand);
       updatePlayerHand((playerHand) => [...playerHand, res.newCard]);
       updateIsBust(res.isBust);
       if (res.isBust) {
         stand();
       }
       updateLobbyState('started');
-      console.log('new player hand is ' + playerHand);
     });
   }
 
@@ -85,13 +83,12 @@ function App() {
       updateOpponentHand((opponentHand) => [data.opponentFirstCard, 'back']); 
       updateLobbyState('started');
     })
-    
-    socket.off('switchPlayer').once('switchPlayer', () => {
+
+    socket.once('switchPlayer', () => {
       updateCurrentPlayer(!currentPlayer);
     })
   
-    socket.off('opponentHit').once('opponentHit', () => {
-      console.log('opponent smacked');
+    socket.once('opponentHit', () => {
       updateOpponentHand((opponentHand) => [...opponentHand, 'back']);
     })
 
