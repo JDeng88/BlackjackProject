@@ -63,7 +63,7 @@ server.listen(port, () => {
 
 
 io.on('connection', socket => {
-    socket.on('createRoom', (name, fn) => {     //TODO: convert to lambda functions  && handle edge cases
+    socket.on('createRoom', (name, fn) => {     
         (async () => {
             var room = await handleCreateRoom(name, socket.id);
             if (room == null){
@@ -75,7 +75,7 @@ io.on('connection', socket => {
         })()
     })
 
-    socket.on('joinRoom', (name, fn) => {     //TODO: get rid of callback
+    socket.on('joinRoom', (name, fn) => {     //TODO: edge cases
         (async () => {
             var room = await handleJoinRoom(name, socket.id);
             try {
@@ -84,13 +84,11 @@ io.on('connection', socket => {
                     playerHand: room.playerOne.hand,
                     opponentFirstCard: room.playerTwo.hand[0],
                     currentPlayer: room.currentPlayer,
-                    roomName: room.name
                 }) 
                 io.to(room.playerTwo.playerID).emit('initialHands', {
                     playerHand: room.playerTwo.hand,
                     opponentFirstCard: room.playerOne.hand[0],
                     currentPlayer: room.currentPlayer,
-                    roomName: room.name
                 })
             } catch(err) {
                 console.log(err);
@@ -99,7 +97,7 @@ io.on('connection', socket => {
         })()
     })
 
-    socket.on('hit', (name, fn) => { //TODO: stand and hit do not need to pass room name. remove room name from intialization
+    socket.on('hit', (fn) => { //TODO: stand and hit do not need to pass room name. remove room name from intialization
         var id = socket.id;
         console.log('socket id is ' + id);
         (async () => {
@@ -130,17 +128,17 @@ io.on('connection', socket => {
         })()
     })
 
-    socket.on('stand', (name) => 
+    socket.on('stand', () => 
     {
         (async () => {
             var id = socket.id;
+            console.log(id);
             var room = await Room.findOne({currentPlayer: id});
             if (room.playerOne.playerID == id){
                 room.currentPlayer = room.playerTwo.playerID;
                 await room.save();
-                console.log(name + "is name");
                 console.log(room.name + "is room.name");
-                io.to(name).emit('switchPlayer');
+                io.to(room.name).emit('switchPlayer');
             } else {
                 var hands = [room.playerOne.hand, room.playerTwo.hand];
                 io.to(room.name).emit('winner', checkWinner(hands));
@@ -251,7 +249,6 @@ async function handleJoinRoom(name, id){
         room.playerTwo = playerTwo;
         room.shoe = hands[0];
         room.currentPlayer = room.playerOne.playerID;
-        console.log('current player is ' + room.currentPlayer);
         await room.save();
         return room;
     }

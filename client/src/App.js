@@ -17,7 +17,6 @@ function App() {
   const [playerHand, updatePlayerHand] = useState([]);
   const [opponentHand, updateOpponentHand] = useState([]);
   const [currentPlayer, updateCurrentPlayer] = useState(false);
-  const [roomName, updateRoomName] = useState();
   const [isBust, updateIsBust] = useState(false);
   const [winStatus, updateWinStatus] = useState(false);
   const [errorStatus, updateErrorStatus] = useState({
@@ -61,7 +60,7 @@ function App() {
   }
 
   const hit = () => {
-    socket.emit('hit', roomName, function(res){ 
+    socket.emit('hit', function(res){ 
       updatePlayerHand((playerHand) => [...playerHand, res.newCard]);
       updateIsBust(res.isBust);
       if (res.isBust) {
@@ -72,23 +71,22 @@ function App() {
   }
 
   const stand = () => {
-    socket.emit('stand', roomName);
+    socket.emit('stand');
   }
 
   useEffect(() => {
   
     socket.once('initialHands', (data) => {
-      updateRoomName(data.roomName);
       updatePlayerHand((playerHand) => [...data.playerHand]);
       updateOpponentHand((opponentHand) => [data.opponentFirstCard, 'back']); 
       updateLobbyState('started');
     })
 
-    socket.once('switchPlayer', () => {
+    socket.off('switchPlayer').once('switchPlayer', () => {
       updateCurrentPlayer(!currentPlayer);
     })
   
-    socket.once('opponentHit', () => {
+    socket.off('opponentHit').once('opponentHit', () => {
       updateOpponentHand((opponentHand) => [...opponentHand, 'back']);
     })
 
