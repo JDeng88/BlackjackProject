@@ -8,10 +8,11 @@ import PlayerHand from './PlayerHand';
 import PlayerActions from './PlayerActions';
 import Snackbar from '@mui/material/Snackbar';
 
-const port = process.env.SERVER_URL || 'http://localhost:5000';
+const port = process.env.PORT || 'http://localhost:5000';
 const socket = io.connect(port); //TODO: environment variables
 
 function App() {
+
 
   const [lobbyState, updateLobbyState] = useState('');
   const [playerHand, updatePlayerHand] = useState([]);
