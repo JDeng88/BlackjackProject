@@ -13,6 +13,10 @@ const socket = io.connect(port); //TODO: environment variables
 
 function App() {
 
+  console.log("hello world");
+  console.log(process.env.PORT);
+  console.log(process.env.SERVER_URL);
+
 
   const [lobbyState, updateLobbyState] = useState('');
   const [playerHand, updatePlayerHand] = useState([]);
