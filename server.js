@@ -12,7 +12,7 @@ app.use(express.static(__dirname + '/public'));
 app.use(cors());
 app.use(express.json())
 
-const db = require('./config/keys').mongoURI;
+const db = process.env.DB_URI || require('./config/keys').mongoURI;
 mongoose
     .connect(db)
     .then(() => console.log('database sucessfully connected'))
@@ -63,6 +63,7 @@ server.listen(port, () => {
 
 
 io.on('connection', socket => {
+    console.log("socket has connected");
     socket.on('createRoom', (name, fn) => {     
         (async () => {
             var room = await handleCreateRoom(name, socket.id);
@@ -207,7 +208,7 @@ function sumHand(hand){
 }
 
 
-function checkWinner(hands){ 
+function checkWinner(hands){ //TODO: fix bugs with winners
     var lowestDiff = 21;
     var winners = []; //Array to store multiple winners in case of tie
     hands.forEach((element) => {
