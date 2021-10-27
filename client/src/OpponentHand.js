@@ -10,7 +10,7 @@ function OpponentHand(props){
     }, [props.opponentHand]);
     return (
         <div className="hand" id="opponent">
-            <h1> Your Opponent's hand</h1>
+            <h1> Your Opponent's Hand</h1>
             <Stack spacing={1} direction="row" alignItems="center" justifyContent="center">
                 {opponentHand.map((card) => (<img src={cards[card]} alt="Opponent Card" className="card"></img>))}
             </Stack>

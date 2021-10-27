@@ -8,6 +8,10 @@ const PlayerSchema = new Schema({
     },
     hand: {
         type: Array
+    },
+    again: {
+        type: Boolean,
+        default: false
     }
 })
 

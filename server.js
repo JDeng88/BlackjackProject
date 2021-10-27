@@ -72,7 +72,7 @@ io.on('connection', socket => {
         })()
     })
 
-    socket.on('joinRoom', (name, fn) => {     //TODO: edge cases
+    socket.on('joinRoom', (name, fn) => {     
         (async () => {
             var room = await handleJoinRoom(name, socket.id);
             if (room == null){
@@ -99,7 +99,7 @@ io.on('connection', socket => {
         })()
     })
 
-    socket.on('hit', (fn) => { //TODO: stand and hit do not need to pass room name. remove room name from intialization
+    socket.on('hit', (fn) => { 
         var id = socket.id;
         (async () => {
             var room = await Room.findOne({currentPlayer: id});
@@ -144,22 +144,64 @@ io.on('connection', socket => {
         })()
     })
 
-    socket.on('disconnect', () => {
-        console.log('socket dis');
+    socket.on('disconnect', () => { //TODO: remove rooms
         (async () => {
             var id = socket.id;
-            Player.deleteOne({playerID: id}, function(err){
-                if (err){
-                    console.log(err);
+            var room = await Room.findOne({"playerOne.playerID": id});
+            if (room == null){
+                room = await Room.findOne({"playerTwo.playerID": id});
+                if (room != null){
+                    room.playerTwo = null;
+                    await room.save();
                 } else {
-                    console.log('sucessfuly deleted');
+                    return;
                 }
-            });
+            } else {
+                room.playerOne = null;
+                await room.save();
+            }
+            if (room.playerOne == null && room.playerTwo == null){
+                Room.deleteOne({name: room.name}, function(err){
+                    if (err){
+                        console.log(err);
+                    }
+                });
+
+            }
+        })()
+    })
+
+    socket.on('again', () => {
+        (async () => {
+            var id = socket.id;
+            var room = await Room.findOne({"playerOne.playerID": id});
+            if (room == null){
+                room = await Room.findOne({"playerTwo.playerID": id});
+                room.playerTwo.again = true;
+                await room.save();
+            } else {
+                room.playerOne.again = true;
+                await room.save();
+            }
+            if (room.playerOne.again && room.playerTwo.again){
+                room = await initializeRoom(room, room.playerOne.playerID, room.playerTwo.playerID);
+                io.to(room.playerOne.playerID).emit('initialHands', {
+                    playerHand: room.playerOne.hand,
+                    opponentFirstCard: room.playerTwo.hand[0],
+                    currentPlayer: room.currentPlayer,
+                }) 
+                io.to(room.playerTwo.playerID).emit('initialHands', {
+                    playerHand: room.playerTwo.hand,
+                    opponentFirstCard: room.playerOne.hand[0],
+                    currentPlayer: room.currentPlayer,
+                })
+            }
         })()
     })
 
 
 })
+
 
 
 function shuffle(array) { //Fisher-Yates shuffle
@@ -217,7 +259,7 @@ function sumHand(hand){
 }
 
 
-function checkWinner(hands){ //TODO: fix bugs with winners
+function checkWinner(hands){ 
     var lowestDiff = 21;
     var winners = []; //Array to store multiple winners in case of tie
     hands.forEach((element) => {
@@ -237,29 +279,7 @@ async function handleJoinRoom(name, id){
     if (room == null){
         return null;
     } else {
-        var numDecks = Math.floor(Math.random() * 5) + 1; //random int from 1-5 inclusive, allowing for multiple decks
-        var shoe = []; //shoe is term for multiple decks
-        for (i = 0; i < numDecks; i++){
-            shoe = shoe.concat(deck);
-        }
-        shoe = shuffle(shoe);
-        hands = dealHands(shoe); //0 is shoe, 1 is p1, 2 is p2
-        var playerOne = new Player({
-            playerID: room.playerOne.playerID,
-            hand: hands[1]
-        });
-        var playerTwo = new Player({
-            playerID: id,
-            hand: hands[2]
-        })
-        room.playerOne = playerOne;
-        room.playerTwo = playerTwo;
-        room.shoe = hands[0];
-        room.currentPlayer = room.playerOne.playerID;
-        await playerOne.save();
-        await playerTwo.save();
-        await room.save();
-        return room;
+        return initializeRoom(room, room.playerOne.playerID, id);
     }
 }
 
@@ -279,5 +299,31 @@ async function handleCreateRoom(name, id){
         return null;
     }
 }
+
+async function initializeRoom(room, playerOneID, playerTwoID){
+    var numDecks = Math.floor(Math.random() * 5) + 1; //random int from 1-5 inclusive, allowing for multiple decks
+    var shoe = []; //shoe is term for multiple decks
+    for (i = 0; i < numDecks; i++){
+        shoe = shoe.concat(deck);
+    }
+    shoe = shuffle(shoe);
+    hands = dealHands(shoe); //0 is shoe, 1 is p1, 2 is p2
+    var playerOne = new Player({
+        playerID: playerOneID,
+        hand: hands[1]
+    });
+    var playerTwo = new Player({
+        playerID: playerTwoID,
+        hand: hands[2]
+    })
+    room.playerOne = playerOne;
+    room.playerTwo = playerTwo;
+    room.shoe = hands[0];
+    room.currentPlayer = room.playerOne.playerID;
+    await room.save();
+    return room;
+}
+
+
 
 

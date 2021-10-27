@@ -6,6 +6,7 @@ import Waiting from './Waiting'
 import OpponentHand from './OpponentHand';
 import PlayerHand from './PlayerHand';
 import PlayerActions from './PlayerActions';
+import Again from './Again';
 import Snackbar from '@mui/material/Snackbar';
 
 const port = process.env.REACT_APP_BASE_URL || 'http://localhost:5000';
@@ -18,6 +19,7 @@ function App() {
   const [currentPlayer, updateCurrentPlayer] = useState(false);
   const [isBust, updateIsBust] = useState(false);
   const [winStatus, updateWinStatus] = useState(false);
+  const [playAgain, updatePlayAgain] = useState(false);
   const [errorStatus, updateErrorStatus] = useState({
       status: false,
       message: '',
@@ -73,11 +75,25 @@ function App() {
     socket.emit('stand');
   }
 
+  const confirmAgain = () => {
+    updatePlayAgain(true);
+    socket.emit('again');
+  }
+
   useEffect(() => {
   
     socket.once('initialHands', (data) => {
+      if (data.currentPlayer === socket.id){
+        updateCurrentPlayer(true);
+      } else {
+        updateCurrentPlayer(false);
+      }
       updatePlayerHand((playerHand) => [...data.playerHand]);
       updateOpponentHand((opponentHand) => [data.opponentFirstCard, 'back']); 
+      updatePlayAgain(false);
+      updateWinStatus(false);
+      updateErrorStatus(false);
+      updateIsBust(false);
       updateLobbyState('started');
     })
 
@@ -157,14 +173,26 @@ function App() {
   }
 
   switch(lobbyState){
-    case 'started':
     case 'over':
-      let message = updateMessage();
+    case 'started':
+      let againMessage;
+      if (winStatus !== false){
+        if (!playAgain){
+          againMessage= <Again confirmAgain = {confirmAgain}/>;
+        } else {
+          againMessage = <h1> Waiting for opponent to play again</h1>
+        }
+      } else {
+        againMessage = <> </>;
+      }
+      
+      let statusMessage = updateMessage();
       return (
         <div className="lobby" style={{backgroundImage: `url(${process.env.PUBLIC_URL + '/lobbyBackground.jpeg'})` }}>
           <OpponentHand opponentHand = {opponentHand}/>
           <PlayerHand playerHand = {playerHand} />
-          {message}
+          {statusMessage}
+          {againMessage}
         </div>
     )
     case 'waiting':
