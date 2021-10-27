@@ -7,17 +7,12 @@ import OpponentHand from './OpponentHand';
 import PlayerHand from './PlayerHand';
 import PlayerActions from './PlayerActions';
 import Snackbar from '@mui/material/Snackbar';
+import {} from 'dotenv/config';
 
 const port = process.env.PORT || 'http://localhost:5000';
 const socket = io.connect(port); //TODO: environment variables
 
 function App() {
-
-  console.log("hello world");
-  console.log(process.env.PORT);
-  console.log(process.env.SERVER_URL);
-
-
   const [lobbyState, updateLobbyState] = useState('');
   const [playerHand, updatePlayerHand] = useState([]);
   const [opponentHand, updateOpponentHand] = useState([]);
