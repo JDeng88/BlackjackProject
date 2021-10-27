@@ -256,7 +256,12 @@ async function handleJoinRoom(name, id){
 }
 
 async function handleCreateRoom(name, id){
-    var room = await Room.findOne({name: name});
+    try {
+        var room = await Room.findOne({name: name});
+    } catch (err){
+        console.log(err);
+    }
+    
     if (room == null){
         var newPlayer = new Player({
             playerID: id
