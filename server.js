@@ -46,9 +46,6 @@ const deck = ["D2", "C2", "H2", "S2",
 //D = diamond, C = club, H = heart, S = spade, T= ten, J = Jack, Q = Queen, K = King, A = Ace
 
 
-
-const rooms = [];
-
 if (process.env.NODE_ENV === 'production'){
     app.use(express.static('client/build'));
     app.get('*', (req, res)  => {
@@ -63,7 +60,6 @@ server.listen(port, () => {
 
 
 io.on('connection', socket => {
-    console.log("socket has connected");
     socket.on('createRoom', (name, fn) => {     
         (async () => {
             var room = await handleCreateRoom(name, socket.id);
@@ -79,6 +75,11 @@ io.on('connection', socket => {
     socket.on('joinRoom', (name, fn) => {     //TODO: edge cases
         (async () => {
             var room = await handleJoinRoom(name, socket.id);
+            if (room == null){
+                fn('nonexist');
+            } else if (room.playerTwo != null){
+                fn('full');
+            }
             try {
                 socket.join(room.name);
                 io.to(room.playerOne.playerID).emit('initialHands', {
@@ -100,17 +101,13 @@ io.on('connection', socket => {
 
     socket.on('hit', (fn) => { //TODO: stand and hit do not need to pass room name. remove room name from intialization
         var id = socket.id;
-        console.log('socket id is ' + id);
         (async () => {
             var room = await Room.findOne({currentPlayer: id});
-            console.log("search finished");
             var newCard = room.shoe.shift();
-            console.log(newCard + " is new card");
             if (room.playerOne.playerID == id){
                 room.playerOne.hand.push(newCard);
                 await room.save();
                 var isBust = checkBust(room.playerOne.hand);
-                console.log(isBust + " bust status");
                 fn({
                     newCard: newCard,
                     isBust: isBust
@@ -133,21 +130,35 @@ io.on('connection', socket => {
     {
         (async () => {
             var id = socket.id;
-            console.log(id);
             var room = await Room.findOne({currentPlayer: id});
             if (room.playerOne.playerID == id){
                 room.currentPlayer = room.playerTwo.playerID;
                 await room.save();
-                console.log(room.name + "is room.name");
                 io.to(room.name).emit('switchPlayer');
             } else {
-                var hands = [room.playerOne.hand, room.playerTwo.hand];
+                var hands = [[room.playerOne.hand, room.playerOne.playerID], [room.playerTwo.hand, room.playerTwo.playerID]];
                 io.to(room.name).emit('winner', checkWinner(hands));
                 io.to(room.playerOne.playerID).emit('revealHand', room.playerTwo.hand);
                 io.to(room.playerTwo.playerID).emit('revealHand', room.playerOne.hand);
             }
         })()
     })
+
+    socket.on('disconnect', () => {
+        console.log('socket dis');
+        (async () => {
+            var id = socket.id;
+            Player.deleteOne({playerID: id}, function(err){
+                if (err){
+                    console.log(err);
+                } else {
+                    console.log('sucessfuly deleted');
+                }
+            });
+        })()
+    })
+
+
 })
 
 
@@ -184,7 +195,6 @@ function checkBust(hand){
 function sumHand(hand){ 
     var numAces = 0;
     var sum = 0;
-    console.log(hand + "is hand");
     hand.forEach((card) => {
         var value = card.charAt(1);
         if (value == 'A'){
@@ -203,7 +213,6 @@ function sumHand(hand){
             break;
         }
     }
-
     return sum;
 }
 
@@ -212,13 +221,12 @@ function checkWinner(hands){ //TODO: fix bugs with winners
     var lowestDiff = 21;
     var winners = []; //Array to store multiple winners in case of tie
     hands.forEach((element) => {
-        console.log(element);
-        var currentDiff = 21 - sumHand(element);
+        var currentDiff = 21 - sumHand(element[0]); //element[0] is the hand, element[1] is the player id
         if (currentDiff >= 0 && currentDiff <  lowestDiff){
             lowestDiff = currentDiff;
-            winners = [element];
+            winners = [element[1]];
         } else if(currentDiff == lowestDiff){
-            winners.push(element);
+            winners.push(element[1]);
         }
     })
     return winners;
@@ -227,8 +235,6 @@ function checkWinner(hands){ //TODO: fix bugs with winners
 async function handleJoinRoom(name, id){
     var room = await Room.findOne({name: name});
     if (room == null){
-        console.log("room not found");
-        console.log(name);
         return null;
     } else {
         var numDecks = Math.floor(Math.random() * 5) + 1; //random int from 1-5 inclusive, allowing for multiple decks
@@ -250,18 +256,15 @@ async function handleJoinRoom(name, id){
         room.playerTwo = playerTwo;
         room.shoe = hands[0];
         room.currentPlayer = room.playerOne.playerID;
+        await playerOne.save();
+        await playerTwo.save();
         await room.save();
         return room;
     }
 }
 
 async function handleCreateRoom(name, id){
-    try {
-        var room = await Room.findOne({name: name});
-    } catch (err){
-        console.log(err);
-    }
-    
+    var room = await Room.findOne({name: name});
     if (room == null){
         var newPlayer = new Player({
             playerID: id
