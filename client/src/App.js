@@ -9,7 +9,7 @@ import PlayerActions from './PlayerActions';
 import Snackbar from '@mui/material/Snackbar';
 
 const port = process.env.PORT || 'http://localhost:5000';
-const socket = io.connect('https://blackjackapp2.herokuapp.com/'); //TODO: environment variables
+const socket = io.connect(port); //TODO: environment variables
 
 function App() {
 
