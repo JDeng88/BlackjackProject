@@ -1,3 +1,5 @@
 module.exports = {
-    mongoURI: 'mongodb+srv://JDeng88:Ayylmao69@blackjackapp.6xkkr.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+    //Database URI goes here for testing
+    //Production version has URI stored in environment variable
+    
 }
